@@ -6,11 +6,28 @@ import com.smug.repository.NovelRepository;
 import com.smug.repository.PostgresNovelRepository;
 import com.smug.service.BookImportService;
 import com.smug.service.LibraryService;
+import com.smug.ui.MainLayout;
+import javafx.application.Application;
+import javafx.stage.Stage;
 
 import java.io.File;
 import java.util.List;
 
-public class Main {
+public class Main extends Application {
+
+    @Override
+    public void start(Stage primaryStage) {
+        NovelRepository repository = new PostgresNovelRepository();
+        MainLayout layout = new MainLayout(primaryStage, repository);
+        layout.show();
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+}
+
+/*public class Main {
     public static void main(String[] args) {
         System.out.println("[System] Initializing System via Repository Interface...");
 
@@ -47,4 +64,4 @@ public class Main {
         }
         System.out.println("------------------------------------");
     }
-}
+}*/
