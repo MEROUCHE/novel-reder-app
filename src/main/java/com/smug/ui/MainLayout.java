@@ -1,6 +1,7 @@
 
 package com.smug.ui;
 
+import com.smug.model.NovelModel;
 import com.smug.repository.NovelRepository;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -83,9 +84,9 @@ public class MainLayout {
         mainPane.setCenter(homeView.getView());
     }
 
-    public void switchToNovelDetail(String novelName) {
-        NovelDetailView detailView = new NovelDetailView(this, novelName);
-        mainPane.setCenter(detailView.getView()); // الآن ستعمل بنجاح لأن المتغير مرئي للجميع!
+    public void switchToNovelDetail(NovelModel novel) {
+        NovelDetailView detailView = new NovelDetailView(this, novel, repository);
+        mainPane.setCenter(detailView.getView());
     }
 
     // دالة مساعدة لتنسيق أزرار القائمة الجانبية

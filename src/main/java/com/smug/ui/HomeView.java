@@ -55,17 +55,34 @@ public class HomeView {
                 novelCard.setAlignment(Pos.CENTER);
                 novelCard.setStyle("-fx-background-color: #ffffff; -fx-border-color: #bdc3c7; -fx-border-radius: 8; -fx-background-radius: 8; -fx-cursor: hand;");
 
-                Label coverPlaceholder = new Label("📖");
-                coverPlaceholder.setFont(Font.font("System", 32));
+                // try to load the real cover, fall back to emoji if missing
+                javafx.scene.Node coverNode;
+                try {
+                    String coverPath = novel.getCoverPath();
+                    if (coverPath != null && new java.io.File(coverPath).exists()) {
+                        javafx.scene.image.Image img = new javafx.scene.image.Image(
+                                new java.io.File(coverPath).toURI().toString(),
+                                140, 180, true, true
+                        );
+                        coverNode = new javafx.scene.image.ImageView(img);
+                    } else {
+                        Label fallback = new Label("📖");
+                        fallback.setFont(Font.font("System", 48));
+                        coverNode = fallback;
+                    }
+                } catch (Exception ex) {
+                    Label fallback = new Label("📖");
+                    fallback.setFont(Font.font("System", 48));
+                    coverNode = fallback;
+                }
 
-                Label titleLabel = new Label(novel.getTitle()); // clean, no filepath parsing
+                Label titleLabel = new Label(novel.getTitle());
                 titleLabel.setFont(Font.font("System", FontWeight.BOLD, 13));
                 titleLabel.setWrapText(true);
                 titleLabel.setAlignment(Pos.CENTER);
 
-                // progress bar
-                int current = novel.getCurrentPage() != null ? novel.getCurrentPage() : 0;
-                int total   = novel.getTotalPages()  != null ? novel.getTotalPages()  : 1;
+                int current  = novel.getCurrentPage() != null ? novel.getCurrentPage() : 0;
+                int total    = novel.getTotalPages()  != null ? novel.getTotalPages()  : 1;
                 double progress = (double) current / total;
 
                 javafx.scene.control.ProgressBar progressBar = new javafx.scene.control.ProgressBar(progress);
@@ -75,16 +92,12 @@ public class HomeView {
                 progressLabel.setFont(Font.font("System", 10));
                 progressLabel.setStyle("-fx-text-fill: #7f8c8d;");
 
-                novelCard.getChildren().addAll(coverPlaceholder, titleLabel, progressBar, progressLabel);
-
-                novelCard.setOnMouseClicked(e -> mainLayout.switchToNovelDetail(novel.getTitle()));
+                novelCard.getChildren().addAll(coverNode, titleLabel, progressBar, progressLabel);
+                novelCard.setOnMouseClicked(e -> mainLayout.switchToNovelDetail(novel));
 
                 grid.add(novelCard, column, row);
                 column++;
-                if (column == 4) {
-                    column = 0;
-                    row++;
-                }
+                if (column == 4) { column = 0; row++; }
             }
 
         } catch (Exception e) {
