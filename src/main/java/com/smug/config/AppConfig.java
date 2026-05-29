@@ -1,4 +1,4 @@
-package config;
+package com.smug.config;
 
 import java.io.IOException;
 import java.io.InputStream;

@@ -25,7 +25,7 @@ public class Main {
                 System.out.println("\n[System] Step 1: Processing book import...");
                 NovelModel newNovel = bookImportService.importBook(testFile);
 
-                String bookId = newNovel.getFilePath();
+                Integer bookId = newNovel.getId();
 
                 System.out.println("\n[System] Step 3: Simulating UI interaction (Faved & read to page 12)...");
                 libraryService.toggleFavorite(bookId, true);

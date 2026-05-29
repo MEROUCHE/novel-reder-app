@@ -34,31 +34,49 @@ public class PostgresNovelRepository implements NovelRepository {
     public void toggleFavorite(String filePath, boolean isFavorite) {
         DataBaseManager.updateFavorite(filePath,isFavorite);
     }*/
-    @Override
-    public void addNovel(NovelModel novel) {
+@Override
+    public NovelModel addNovel(NovelModel novel) {
+        String insertSql = "INSERT INTO novels(title, file_path, cover_path, total_pages) " +
+                "VALUES(?,?,?,?) ON CONFLICT (file_path) DO NOTHING";
 
-        String sql = "INSERT INTO novels(title, file_path, cover_path, total_pages) VALUES(?,?,?,?) " +
-                        "ON CONFLICT (file_path) DO NOTHING";
+        String selectSql = "SELECT id FROM novels WHERE file_path = ?";
 
-        try (Connection conn = getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = getConnection()) {
 
-            pstmt.setString(1, novel.getTitle());
-            pstmt.setString(2, novel.getFilePath());
-            pstmt.setString(3, novel.getCoverPath());
+            // Try to insert
+            try (PreparedStatement pstmt = conn.prepareStatement(insertSql, new String[]{"id"})) {
+                pstmt.setString(1, novel.getTitle());
+                pstmt.setString(2, novel.getFilePath());
+                pstmt.setString(3, novel.getCoverPath());
+                if (novel.getTotalPages() != null) {
+                    pstmt.setInt(4, novel.getTotalPages());
+                } else {
+                    pstmt.setNull(4, Types.INTEGER);
+                }
+                pstmt.executeUpdate();
 
-            if (novel.getTotalPages() != null) {
-                pstmt.setInt(4, novel.getTotalPages());
-            } else {
-                pstmt.setNull(4, Types.INTEGER);
+                try (ResultSet keys = pstmt.getGeneratedKeys()) {
+                    if (keys.next()) {
+                        novel.setId(keys.getInt(1));
+                        return novel; // new book, we have the id
+                    }
+                }
             }
 
-            pstmt.executeUpdate();
+            // Book already existed — fetch its id
+            try (PreparedStatement pstmt = conn.prepareStatement(selectSql)) {
+                pstmt.setString(1, novel.getFilePath());
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (rs.next()) {
+                        novel.setId(rs.getInt("id"));
+                    }
+                }
+            }
 
         } catch (SQLException e) {
-            System.err.println("[Backend] Error inserting novel: " + e.getMessage()
-            );
+            System.err.println("[Backend] Error inserting novel: " + e.getMessage());
         }
+        return novel;
     }
 
     @Override
@@ -88,8 +106,8 @@ public class PostgresNovelRepository implements NovelRepository {
     }
 
     @Override
-    public void updateReadingProgress(String filePath, Integer currentPage) {
-        String sql = "UPDATE novels SET current_page = ? WHERE file_path = ?";
+    public void updateReadingProgress(Integer id, Integer currentPage) {
+        String sql = "UPDATE novels SET current_page = ? WHERE id = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -99,29 +117,43 @@ public class PostgresNovelRepository implements NovelRepository {
             } else {
                 pstmt.setNull(1, Types.INTEGER);
             }
-            pstmt.setString(2, filePath);
-
+            pstmt.setInt(2, id);
             pstmt.executeUpdate();
-            System.out.println("[Database] Updated progress in DB for: " + filePath);
+
         } catch (SQLException e) {
             System.err.println("[Database] Error updating progress: " + e.getMessage());
         }
     }
 
+
     @Override
-    public void toggleFavorite(String filePath, boolean isFavorite) {
-        String sql = "UPDATE novels SET is_favorite = ? WHERE file_path = ?";
+    public void toggleFavorite(Integer id, boolean isFavorite) {
+        String sql = "UPDATE novels SET is_favorite = ? WHERE id = ?";
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql, new String[]{"id"})) {
+
+            pstmt.setBoolean(1, isFavorite);
+            pstmt.setInt(2, id);
+            pstmt.executeUpdate();
+
+        } catch (SQLException e) {
+            System.err.println("[Database] Error updating favorite: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public void deleteNovel(Integer id) {
+        String sql = "DELETE FROM novels WHERE id = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            pstmt.setBoolean(1, isFavorite);
-            pstmt.setString(2, filePath);
-
+            pstmt.setInt(1, id);
             pstmt.executeUpdate();
-            System.out.println("[Database] Updated favorite status in DB to " + isFavorite);
+
         } catch (SQLException e) {
-            System.err.println("[Database] Error updating favorite: " + e.getMessage());
+            System.err.println("[Database] Error deleting novel: " + e.getMessage());
         }
     }
 }

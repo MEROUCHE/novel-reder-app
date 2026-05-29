@@ -48,8 +48,8 @@ public class BookImportService {
             System.out.println("[Service] Successfully parsed: " + title + " (" + totalPages + " pages)");
 
             NovelModel novel = new NovelModel(title, pdfFile.getAbsolutePath(), outputFile.getPath(), 0, totalPages, false);
-            repository.addNovel(novel);
-            return novel;
+
+            return repository.addNovel(novel);
         }
     }
 }

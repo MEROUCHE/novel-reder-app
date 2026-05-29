@@ -17,23 +17,15 @@ public class LibraryService {
         return repository.getAllNovels();
     }
 
-    public void updateReadingProgress(
-            String filePath,
-            Integer currentPage) {
-
-        repository.updateReadingProgress(
-                filePath,
-                currentPage
-        );
+    public void updateReadingProgress(Integer id, Integer currentPage) {
+        repository.updateReadingProgress(id, currentPage);
     }
 
-    public void toggleFavorite(
-            String filePath,
-            boolean isFavorite) {
+    public void toggleFavorite(Integer id, boolean isFavorite) {
+        repository.toggleFavorite(id, isFavorite);
+    }
 
-        repository.toggleFavorite(
-                filePath,
-                isFavorite
-        );
+    public void deleteNovel(Integer id){
+        repository.deleteNovel(id);
     }
 }

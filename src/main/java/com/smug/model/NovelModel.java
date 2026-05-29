@@ -4,6 +4,7 @@ import java.util.Objects;
 
 public class NovelModel {
 
+    private Integer id;
     private String title;
     private  String filePath;
     private String coverPath;
@@ -11,13 +12,21 @@ public class NovelModel {
     private  Integer totalPages;
     private boolean isFavorite;
 
-    public NovelModel(String title, String filePath, String coverPath, int currentPage, int totalPages, boolean isFavorite) {
+    public NovelModel(String title, String filePath, String coverPath, Integer currentPage, Integer totalPages, boolean isFavorite) {
         this.title = title;
         this.filePath = filePath;
         this.coverPath = coverPath;
         this.currentPage = currentPage;
         this.totalPages = totalPages;
         this.isFavorite = isFavorite;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
     }
 
     public String getTitle() {
@@ -48,7 +57,7 @@ public class NovelModel {
         return currentPage;
     }
 
-    public void setCurrentPage(int currentPage) {
+    public void setCurrentPage(Integer currentPage) {
         this.currentPage = currentPage;
     }
 
@@ -56,7 +65,7 @@ public class NovelModel {
         return totalPages;
     }
 
-    public void setTotalPages(int totalPages) {
+    public void setTotalPages(Integer totalPages) {
         this.totalPages = totalPages;
     }
 
@@ -72,12 +81,12 @@ public class NovelModel {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         NovelModel that = (NovelModel) o;
-        return totalPages == that.totalPages && Objects.equals(title, that.title) && Objects.equals(filePath, that.filePath) && Objects.equals(coverPath, that.coverPath);
+        return isFavorite == that.isFavorite && Objects.equals(title, that.title) && Objects.equals(filePath, that.filePath) && Objects.equals(coverPath, that.coverPath) && Objects.equals(currentPage, that.currentPage) && Objects.equals(totalPages, that.totalPages);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(title, filePath, coverPath, totalPages);
+        return Objects.hash(title, filePath, coverPath, currentPage, totalPages, isFavorite);
     }
 
     @Override

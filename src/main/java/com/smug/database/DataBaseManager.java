@@ -1,11 +1,8 @@
 package com.smug.database;
 
-import com.smug.model.NovelModel;
-import config.AppConfig;
+import com.smug.config.AppConfig;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
 
 public class DataBaseManager {
     private static final String DB_URL = AppConfig.get("db.url");;
