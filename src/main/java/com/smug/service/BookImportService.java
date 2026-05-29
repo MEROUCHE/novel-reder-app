@@ -1,4 +1,56 @@
 package com.smug.service;
 
+import com.smug.model.NovelModel;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.rendering.PDFRenderer;
+
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.util.UUID;
+
 public class BookImportService {
+
+    private static final String COVERS_DIR = "data/covers/";
+
+    public static NovelModel processNewPdf(File pdfFile) throws IOException {
+        File directory = new File(COVERS_DIR);
+        if (!directory.exists()) {
+            directory.mkdirs();
+        }
+
+        try (PDDocument document = PDDocument.load(pdfFile)) {
+
+            String title = document.getDocumentInformation().getTitle();
+
+            if (title == null || title.trim().isEmpty()) {
+                title = pdfFile.getName().replace(".pdf", "");
+            }
+
+            Integer totalPages = document.getNumberOfPages();
+
+            PDFRenderer pdfRenderer = new PDFRenderer(document);
+
+            BufferedImage bufferedImage = pdfRenderer.renderImageWithDPI(0, 72);
+
+            String coverFileName = UUID.randomUUID().toString() + "_cover.png";
+            File outputFile = new File(COVERS_DIR + coverFileName);
+
+            // Save the rendered image to disk
+            ImageIO.write(bufferedImage, "png", outputFile);
+
+            System.out.println("[Service] Successfully parsed: " + title + " (" + totalPages + " pages)");
+
+            // 4. Return the fully populated model object (unfailing default: page 0, not favorited yet)
+            return new NovelModel(
+                    title,
+                    pdfFile.getAbsolutePath(),
+                    outputFile.getPath(),
+                    0,
+                    totalPages,
+                    false
+            );
+        }
+    }
 }

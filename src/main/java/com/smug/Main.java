@@ -2,7 +2,9 @@ package com.smug;
 
 import com.smug.database.DataBaseManager;
 import com.smug.model.NovelModel;
+import com.smug.service.BookImportService;
 
+import java.io.File;
 import java.util.List;
 
 public class Main {
@@ -31,5 +33,17 @@ public class Main {
             System.out.println(novel);
         }
         System.out.println("---------------------------------");
+
+        /*File realPdf = new File("/home/smug/Downloads/Computer_Ethics_Course_EN.pdf");
+
+        try {
+            System.out.println("\n[System] Parsing real PDF file...");
+            NovelModel realNovel = BookImportService.processNewPdf(realPdf);
+
+            System.out.println("[System] Inserting parsed novel into Postgres...");
+            DataBaseManager.insertNovel(realNovel);
+        } catch (Exception e) {
+            System.err.println("[System] Failed to parse file: " + e.getMessage());
+        }*/
     }
 }

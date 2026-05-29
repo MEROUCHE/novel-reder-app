@@ -78,4 +78,40 @@ public class DataBaseManager {
         }
         return novels;
     }
+
+    public static void updateProgress(String filePath, Integer currentPage) {
+        String sql = "UPDATE novels SET current_page = ? WHERE file_path = ?";
+
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            if (currentPage != null) {
+                pstmt.setInt(1, currentPage);
+            } else {
+                pstmt.setNull(1, Types.INTEGER);
+            }
+            pstmt.setString(2, filePath);
+
+            pstmt.executeUpdate();
+            System.out.println("[Database] Updated progress in DB for: " + filePath);
+        } catch (SQLException e) {
+            System.err.println("[Database] Error updating progress: " + e.getMessage());
+        }
+    }
+
+    public static void updateFavorite(String filePath, boolean isFavorite) {
+        String sql = "UPDATE novels SET is_favorite = ? WHERE file_path = ?";
+
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setBoolean(1, isFavorite);
+            pstmt.setString(2, filePath);
+
+            pstmt.executeUpdate();
+            System.out.println("[Database] Updated favorite status in DB to " + isFavorite);
+        } catch (SQLException e) {
+            System.err.println("[Database] Error updating favorite: " + e.getMessage());
+        }
+    }
 }
