@@ -12,6 +12,14 @@ public class DataBaseManager {
     private static final String DB_USER = AppConfig.get("db.user");;
     private static final String DB_PASSWORD = AppConfig.get("db.password");;
 
+    public static Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(
+                DB_URL,
+                DB_USER,
+                DB_PASSWORD
+        );
+    }
+
     public static void initializeDatabase(){
         String createTableSQL ="CREATE TABLE IF NOT EXISTS novels (" +
                 "id SERIAL PRIMARY KEY," +
@@ -23,7 +31,7 @@ public class DataBaseManager {
                 "is_favorite BOOLEAN DEFAULT FALSE" +
                 ");";
 
-        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+        try (Connection conn = getConnection();
              Statement stmt = conn.createStatement()) {
 
             stmt.execute(createTableSQL);
@@ -34,10 +42,10 @@ public class DataBaseManager {
         }
     }
 
-    public static void insertNovel(NovelModel novel) {
+    /*public static void insertNovel(NovelModel novel) {
         String sql = "INSERT INTO novels(title, file_path, cover_path, total_pages) VALUES(?,?,?,?) " +
                 "ON CONFLICT (file_path) DO NOTHING";
-        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+        try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, novel.getTitle());
@@ -60,7 +68,7 @@ public class DataBaseManager {
         List<NovelModel> novels = new ArrayList<>();
         String querySQL = "SELECT * FROM novels";
 
-        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+        try (Connection conn = getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(querySQL)) {
 
@@ -83,7 +91,7 @@ public class DataBaseManager {
     public static void updateProgress(String filePath, Integer currentPage) {
         String sql = "UPDATE novels SET current_page = ? WHERE file_path = ?";
 
-        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+        try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             if (currentPage != null) {
@@ -103,7 +111,7 @@ public class DataBaseManager {
     public static void updateFavorite(String filePath, boolean isFavorite) {
         String sql = "UPDATE novels SET is_favorite = ? WHERE file_path = ?";
 
-        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+        try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setBoolean(1, isFavorite);
@@ -114,5 +122,5 @@ public class DataBaseManager {
         } catch (SQLException e) {
             System.err.println("[Database] Error updating favorite: " + e.getMessage());
         }
-    }
+    }*/
 }

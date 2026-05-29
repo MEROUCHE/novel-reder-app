@@ -5,6 +5,7 @@ import com.smug.model.NovelModel;
 import com.smug.repository.NovelRepository;
 import com.smug.repository.PostgresNovelRepository;
 import com.smug.service.BookImportService;
+import com.smug.service.LibraryService;
 
 import java.io.File;
 import java.util.List;
@@ -14,22 +15,21 @@ public class Main {
         System.out.println("[System] Initializing System via Repository Interface...");
 
         NovelRepository repository = new PostgresNovelRepository();
+        BookImportService bookImportService = new BookImportService(repository);
+        LibraryService libraryService = new LibraryService(repository);
 
         File testFile = new File("/home/smug/Downloads/Chapitre 4 Gestion Mémoire Secondaire_copy.pdf");
 
         if (testFile.exists()) {
             try {
                 System.out.println("\n[System] Step 1: Processing book import...");
-                NovelModel newNovel = BookImportService.processNewPdf(testFile);
-
-                System.out.println("[System] Step 2: Saving book via Repository...");
-                repository.addNovel(newNovel);
+                NovelModel newNovel = bookImportService.importBook(testFile);
 
                 String bookId = newNovel.getFilePath();
 
                 System.out.println("\n[System] Step 3: Simulating UI interaction (Faved & read to page 12)...");
-                repository.toggleFavorite(bookId, true);
-                repository.updateReadingProgress(bookId, 12);
+                libraryService.toggleFavorite(bookId, true);
+                libraryService.updateReadingProgress(bookId, 12);
 
             } catch (Exception e) {
                 System.err.println("[System] Error during simulation: " + e.getMessage());
@@ -39,7 +39,7 @@ public class Main {
         }
 
         System.out.println("\n[System] Step 4: Fetching updated library overview...");
-        List<NovelModel> currentLibrary = repository.getAllNovels();
+        List<NovelModel> currentLibrary = libraryService.getLibrary();
 
         System.out.println("\n--- FINAL VERIFIED LIBRARY STATE ---");
         for (NovelModel book : currentLibrary) {

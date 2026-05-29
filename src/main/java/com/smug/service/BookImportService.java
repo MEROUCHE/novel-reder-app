@@ -1,6 +1,7 @@
 package com.smug.service;
 
 import com.smug.model.NovelModel;
+import com.smug.repository.NovelRepository;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.PDFRenderer;
 
@@ -13,8 +14,13 @@ import java.util.UUID;
 public class BookImportService {
 
     private static final String COVERS_DIR = "data/covers/";
+    private final NovelRepository repository;
 
-    public static NovelModel processNewPdf(File pdfFile) throws IOException {
+    public BookImportService(NovelRepository repository) {
+        this.repository = repository;
+    }
+
+    public NovelModel importBook(File pdfFile) throws IOException {
         File directory = new File(COVERS_DIR);
         if (!directory.exists()) {
             directory.mkdirs();
@@ -41,7 +47,9 @@ public class BookImportService {
 
             System.out.println("[Service] Successfully parsed: " + title + " (" + totalPages + " pages)");
 
-            return new NovelModel(title, pdfFile.getAbsolutePath(), outputFile.getPath(), 0, totalPages, false);
+            NovelModel novel = new NovelModel(title, pdfFile.getAbsolutePath(), outputFile.getPath(), 0, totalPages, false);
+            repository.addNovel(novel);
+            return novel;
         }
     }
 }
