@@ -44,7 +44,7 @@ public class NovelModel {
         this.coverPath = coverPath;
     }
 
-    public int getCurrentPage() {
+    public Integer getCurrentPage() {
         return currentPage;
     }
 
@@ -52,7 +52,7 @@ public class NovelModel {
         this.currentPage = currentPage;
     }
 
-    public int getTotalPages() {
+    public Integer getTotalPages() {
         return totalPages;
     }
 
