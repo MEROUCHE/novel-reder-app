@@ -2,6 +2,8 @@ package com.smug;
 
 import com.smug.database.DataBaseManager;
 import com.smug.model.NovelModel;
+import com.smug.repository.NovelRepository;
+import com.smug.repository.PostgresNovelRepository;
 import com.smug.service.BookImportService;
 
 import java.io.File;
@@ -9,41 +11,40 @@ import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
-        System.out.println("[System] Starting Novel Reader Backend Test...");
+        System.out.println("[System] Initializing System via Repository Interface...");
 
-        DataBaseManager.initializeDatabase();
+        NovelRepository repository = new PostgresNovelRepository();
 
-        System.out.println("\n[System] Testing database insertion...");
-        NovelModel testNovel = new NovelModel(
-                "The Hobbit",
-                "/home/user/books/the_hobbit.pdf", // Dummy path
-                "data/covers/hobbit_cover.png",
-                0,
-                310,
-                false
-        );
-        DataBaseManager.insertNovel(testNovel);
+        File testFile = new File("/home/smug/Downloads/Chapitre 01-Classes_internes_InterfaceFctpaquetages.pdf");
 
+        if (testFile.exists()) {
+            try {
+                System.out.println("\n[System] Step 1: Processing book import...");
+                NovelModel newNovel = BookImportService.processNewPdf(testFile);
 
-        System.out.println("\n[System] Testing database retrieval...");
-        List<NovelModel> library = DataBaseManager.fetchAllNovels();
+                System.out.println("[System] Step 2: Saving book via Repository...");
+                repository.addNovel(newNovel);
 
-        System.out.println("\n--- CURRENT DATABASE CONTENTS ---");
-        for (NovelModel novel : library) {
-            System.out.println(novel);
+                String bookId = newNovel.getFilePath();
+
+                System.out.println("\n[System] Step 3: Simulating UI interaction (Faved & read to page 12)...");
+                repository.toggleFavorite(bookId, true);
+                repository.updateReadingProgress(bookId, 12);
+
+            } catch (Exception e) {
+                System.err.println("[System] Error during simulation: " + e.getMessage());
+            }
+        } else {
+            System.out.println("\n[System] Skipping import test: Specify a valid local PDF file path to test parsing.");
         }
-        System.out.println("---------------------------------");
 
-        /*File realPdf = new File("/home/smug/Downloads/Computer_Ethics_Course_EN.pdf");
+        System.out.println("\n[System] Step 4: Fetching updated library overview...");
+        List<NovelModel> currentLibrary = repository.getAllNovels();
 
-        try {
-            System.out.println("\n[System] Parsing real PDF file...");
-            NovelModel realNovel = BookImportService.processNewPdf(realPdf);
-
-            System.out.println("[System] Inserting parsed novel into Postgres...");
-            DataBaseManager.insertNovel(realNovel);
-        } catch (Exception e) {
-            System.err.println("[System] Failed to parse file: " + e.getMessage());
-        }*/
+        System.out.println("\n--- FINAL VERIFIED LIBRARY STATE ---");
+        for (NovelModel book : currentLibrary) {
+            System.out.println(book);
+        }
+        System.out.println("------------------------------------");
     }
 }
