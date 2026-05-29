@@ -37,20 +37,11 @@ public class BookImportService {
             String coverFileName = UUID.randomUUID().toString() + "_cover.png";
             File outputFile = new File(COVERS_DIR + coverFileName);
 
-            // Save the rendered image to disk
             ImageIO.write(bufferedImage, "png", outputFile);
 
             System.out.println("[Service] Successfully parsed: " + title + " (" + totalPages + " pages)");
 
-            // 4. Return the fully populated model object (unfailing default: page 0, not favorited yet)
-            return new NovelModel(
-                    title,
-                    pdfFile.getAbsolutePath(),
-                    outputFile.getPath(),
-                    0,
-                    totalPages,
-                    false
-            );
+            return new NovelModel(title, pdfFile.getAbsolutePath(), outputFile.getPath(), 0, totalPages, false);
         }
     }
 }

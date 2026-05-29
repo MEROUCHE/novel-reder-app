@@ -1,15 +1,16 @@
 package com.smug.database;
 
 import com.smug.model.NovelModel;
+import config.AppConfig;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class DataBaseManager {
-    private static final String DB_URL = "jdbc:postgresql://localhost:5432/novel_db";
-    private static final String DB_USER = "postgres";
-    private static final String DB_PASSWORD = "3258";
+    private static final String DB_URL = AppConfig.get("db.url");;
+    private static final String DB_USER = AppConfig.get("db.user");;
+    private static final String DB_PASSWORD = AppConfig.get("db.password");;
 
     public static void initializeDatabase(){
         String createTableSQL ="CREATE TABLE IF NOT EXISTS novels (" +

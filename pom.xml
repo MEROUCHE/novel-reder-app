@@ -48,7 +48,7 @@
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.8</version>
                 <configuration>
-                    <mainClass>com.novelreader.Main</mainClass>
+                    <mainClass>com.smug.Main</mainClass>
                 </configuration>
             </plugin>
             <plugin>

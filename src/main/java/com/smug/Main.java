@@ -15,7 +15,7 @@ public class Main {
 
         NovelRepository repository = new PostgresNovelRepository();
 
-        File testFile = new File("/home/smug/Downloads/Chapitre 01-Classes_internes_InterfaceFctpaquetages.pdf");
+        File testFile = new File("/home/smug/Downloads/Chapitre 4 Gestion Mémoire Secondaire_copy.pdf");
 
         if (testFile.exists()) {
             try {
