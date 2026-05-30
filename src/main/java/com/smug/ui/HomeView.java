@@ -2,16 +2,13 @@ package com.smug.ui;
 
 import com.smug.Main;
 import com.smug.model.NovelModel;
+import com.smug.service.LibraryService;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import java.io.File;
@@ -24,8 +21,11 @@ public class HomeView {
     private boolean showOnlyFavorites;
     private String searchQuery;
 
-    public HomeView(MainLayout mainLayout, boolean showOnlyFavorites, String searchQuery) {
+    private LibraryService libraryService;
+
+    public HomeView(MainLayout mainLayout, LibraryService libraryService, boolean showOnlyFavorites, String searchQuery) {
         this.mainLayout = mainLayout;
+        this.libraryService = libraryService;
         this.showOnlyFavorites = showOnlyFavorites;
         this.searchQuery = searchQuery.toLowerCase().trim();
         this.scrollPane = new ScrollPane();
@@ -42,8 +42,7 @@ public class HomeView {
         int row = 0;
 
         try {
-            // Grabbing streaming live database rows from your friend's backend repository layer
-            List<NovelModel> databaseNovels = Main.repository.getAllNovels();
+            List<NovelModel> databaseNovels = libraryService.getLibrary();
 
             if (databaseNovels == null || databaseNovels.isEmpty()) {
                 showEmptyMessage("No novels found inside your backend database repository library.");
@@ -54,18 +53,14 @@ public class HomeView {
 
             for (NovelModel novel : databaseNovels) {
 
-                // Filtering based on your friend's model naming convention flag (.isFavior)
-                if (showOnlyFavorites && !novel.isFavorite()) {
-                    continue;
-                }
+                if (showOnlyFavorites && !novel.isFavorite()) continue;
 
                 String title = novel.getTitle() != null ? novel.getTitle() : "Untitled Novel";
-                if (!searchQuery.isEmpty() && !title.toLowerCase().contains(searchQuery)) {
-                    continue;
-                }
+                if (!searchQuery.isEmpty() && !title.toLowerCase().contains(searchQuery)) continue;
 
                 visibleNovelsCount++;
 
+                // ---- CARD CONTAINER (StackPane lets us overlay buttons) ----
                 StackPane cardContainer = new StackPane();
 
                 VBox novelCard = new VBox(12);
@@ -96,41 +91,135 @@ public class HomeView {
                 titleLabel.setStyle("-fx-text-fill: #e2e2f0;");
                 novelCard.getChildren().addAll(coverContainer, titleLabel);
 
-                // Instantly switch straight to interactive reader arena scene on click selection
                 novelCard.setOnMouseClicked(e -> mainLayout.switchToReadScene(novel));
 
-                // --- FLOATING FLOATING OVERLAY HEART ELEMENT DESIGN ---
+                // ---- HEART BUTTON — top right, hover show ----
                 Button heartBtn = new Button(novel.isFavorite() ? "❤️" : "🤍");
                 heartBtn.setFont(Font.font(16));
                 heartBtn.setStyle("-fx-background-color: rgba(255,255,255,0.90); -fx-background-radius: 20; -fx-cursor: hand;");
-
-                // Keeps favorited novels' hearts visible
                 heartBtn.setVisible(novel.isFavorite());
-
-                // Mouse hover events handling interactive state visibility
-                cardContainer.setOnMouseEntered(e -> heartBtn.setVisible(true));
-                cardContainer.setOnMouseExited(e -> heartBtn.setVisible(novel.isFavorite()));
 
                 heartBtn.setOnAction(e -> {
                     try {
                         boolean nextState = !novel.isFavorite();
-                        // Aligned to pass getFilePath() into your friend's toggle parameter layout mapping
-                        Main.repository.toggleFavorite(novel.getId(), nextState);
+                        libraryService.toggleFavorite(novel.getId(), nextState);
                         novel.setFavorite(nextState);
-
                         heartBtn.setText(nextState ? "❤️" : "🤍");
-
                         if (showOnlyFavorites && !nextState) {
                             mainLayout.switchToHome(true, searchQuery);
                         }
                     } catch (Exception ex) {
-                        System.err.println("Could not update favorite state parameter: " + ex.getMessage());
+                        System.err.println("Could not update favorite state: " + ex.getMessage());
                     }
                 });
 
-                cardContainer.getChildren().addAll(novelCard, heartBtn);
+                // ---- DELETE BUTTON — top left, hover show ----
+                Button deleteBtn = new Button("−");
+                deleteBtn.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+                deleteBtn.setStyle(
+                        "-fx-background-color: #c0392b;" +
+                                "-fx-text-fill: #ffffff;" +
+                                "-fx-background-radius: 20;" +
+                                "-fx-cursor: hand;" +
+                                "-fx-min-width: 28px;" +
+                                "-fx-min-height: 28px;" +
+                                "-fx-max-width: 28px;" +
+                                "-fx-max-height: 28px;" +
+                                "-fx-padding: 0;"
+                );
+                deleteBtn.setVisible(false); // hidden by default, shows on hover
+
+                deleteBtn.setOnAction(e -> {
+                    // ---- BLOCKING MODAL — app freezes behind it until user responds ----
+                    javafx.stage.Stage dialog = new javafx.stage.Stage();
+                    dialog.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+                    dialog.initStyle(javafx.stage.StageStyle.UNDECORATED);
+                    dialog.setResizable(false);
+
+                    VBox dialogBox = new VBox(18);
+                    dialogBox.setPadding(new Insets(28, 32, 24, 32));
+                    dialogBox.setAlignment(Pos.CENTER);
+                    dialogBox.setStyle(
+                            "-fx-background-color: #1e2d45;" +
+                                    "-fx-border-color: #c0392b;" +
+                                    "-fx-border-width: 2;" +
+                                    "-fx-border-radius: 12;" +
+                                    "-fx-background-radius: 12;"
+                    );
+
+                    Label icon = new Label("🗑");
+                    icon.setFont(Font.font("Arial", 32));
+
+                    Label msgLabel = new Label("Delete \"" + title + "\"?");
+                    msgLabel.setFont(Font.font("Arial", FontWeight.BOLD, 15));
+                    msgLabel.setStyle("-fx-text-fill: #e2e2f0;");
+
+                    Label subLabel = new Label("This will permanently remove the novel\nfrom your library. This cannot be undone.");
+                    subLabel.setStyle("-fx-text-fill: #8899bb; -fx-font-size: 13px;");
+                    subLabel.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+                    subLabel.setAlignment(Pos.CENTER);
+
+                    HBox btnRow = new HBox(12);
+                    btnRow.setAlignment(Pos.CENTER);
+
+                    Button cancelBtn = new Button("Cancel");
+                    cancelBtn.setPrefWidth(100);
+                    cancelBtn.setPrefHeight(36);
+                    cancelBtn.setStyle(
+                            "-fx-background-color: #2e4066;" +
+                                    "-fx-text-fill: #e2e2f0;" +
+                                    "-fx-font-weight: bold;" +
+                                    "-fx-background-radius: 8;" +
+                                    "-fx-cursor: hand;"
+                    );
+
+                    Button confirmDeleteBtn = new Button("Yes, Delete");
+                    confirmDeleteBtn.setPrefWidth(110);
+                    confirmDeleteBtn.setPrefHeight(36);
+                    confirmDeleteBtn.setStyle(
+                            "-fx-background-color: #c0392b;" +
+                                    "-fx-text-fill: #ffffff;" +
+                                    "-fx-font-weight: bold;" +
+                                    "-fx-background-radius: 8;" +
+                                    "-fx-cursor: hand;"
+                    );
+
+                    cancelBtn.setOnAction(ev -> dialog.close());
+
+                    confirmDeleteBtn.setOnAction(ev -> {
+                        dialog.close();
+                        try {
+                            libraryService.deleteNovel(novel.getId());
+                            mainLayout.switchToHome(showOnlyFavorites, searchQuery);
+                        } catch (Exception ex) {
+                            System.err.println("[Delete Error] " + ex.getMessage());
+                        }
+                    });
+
+                    btnRow.getChildren().addAll(cancelBtn, confirmDeleteBtn);
+                    dialogBox.getChildren().addAll(icon, msgLabel, subLabel, btnRow);
+
+                    javafx.scene.Scene dialogScene = new javafx.scene.Scene(dialogBox, 340, 220);
+                    dialog.setScene(dialogScene);
+                    dialog.showAndWait(); // blocks everything behind it
+                });
+
+                // ---- HOVER: show/hide both overlay buttons ----
+                cardContainer.setOnMouseEntered(e -> {
+                    heartBtn.setVisible(true);
+                    deleteBtn.setVisible(true);
+                });
+                cardContainer.setOnMouseExited(e -> {
+                    heartBtn.setVisible(novel.isFavorite());
+                    deleteBtn.setVisible(false);
+                });
+
+                // Stack: card at bottom, heart top-right, delete top-left
+                cardContainer.getChildren().addAll(novelCard, heartBtn, deleteBtn);
                 StackPane.setAlignment(heartBtn, Pos.TOP_RIGHT);
                 StackPane.setMargin(heartBtn, new Insets(8));
+                StackPane.setAlignment(deleteBtn, Pos.TOP_LEFT);
+                StackPane.setMargin(deleteBtn, new Insets(8));
 
                 grid.add(cardContainer, column, row);
 
@@ -147,7 +236,6 @@ public class HomeView {
             }
 
         } catch (Exception e) {
-            // Clean fallback display placeholder message when running app without spun up PostgreSQL server
             showEmptyMessage("⚠️ Database Link Offline. (Running Design and Layout Mode)");
             return;
         }
@@ -166,7 +254,7 @@ public class HomeView {
 
     private void showEmptyMessage(String message) {
         Label msg = new Label(message);
-        msg.setFont(Font.font("Arial",  FontWeight.BOLD,14));
+        msg.setFont(Font.font("Arial", FontWeight.BOLD, 14));
         msg.setStyle("-fx-text-fill: #556080;");
         msg.setPadding(new Insets(40));
         scrollPane.setContent(msg);
