@@ -1,16 +1,18 @@
 package com.smug.ui;
 
-import com.smug.Main;
 import com.smug.model.NovelModel;
 import com.smug.service.LibraryService;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.text.PDFTextStripper;
+import org.apache.pdfbox.rendering.PDFRenderer;
+import javafx.embed.swing.SwingFXUtils;
+
 import java.io.File;
 
 public class ReadView {
@@ -20,10 +22,9 @@ public class ReadView {
     private NovelModel novel;
     private BorderPane viewPane;
     private int currentPage;
-    private TextArea textViewer;
-
-
     private LibraryService libraryService;
+    private ImageView pageView;
+    private ScrollPane pageScrollPane;
 
     public ReadView(MainLayout mainLayout, NovelModel novel, LibraryService libraryService) {
         this.mainLayout = mainLayout;
@@ -65,45 +66,49 @@ public class ReadView {
         header.getChildren().addAll(backBtn, titleLabel);
         viewPane.setTop(header);
 
-        // ---- TEXT AREA ----
-        VBox contentBox = new VBox(20);
+        // ---- CONTENT ----
+        VBox contentBox = new VBox();
         contentBox.setAlignment(Pos.CENTER);
         contentBox.setPadding(new Insets(15, 20, 15, 20));
+        VBox.setVgrow(contentBox, Priority.ALWAYS);
 
-        textViewer = new TextArea();
-        VBox.setVgrow(textViewer, Priority.ALWAYS);
-        textViewer.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
-        textViewer.setEditable(false);
-        textViewer.setWrapText(true);
-        textViewer.setFont(Font.font("Georgia", 17));
-        textViewer.setStyle(
-                "-fx-control-inner-background: #1e2d45;" +
-                        "-fx-text-fill: #e8eaf6;" +
-                        "-fx-background-color: #1e2d45;" +
-                        "-fx-border-color: #2e4066;" +
-                        "-fx-background-radius: 10;" +
-                        "-fx-border-radius: 10;" +
-                        "-fx-padding: 24 32 24 32;" +
-                        "-fx-line-spacing: 8;"
+        pageView = new ImageView();
+        pageView.setPreserveRatio(true);
+
+        // wrap in StackPane for centering
+        StackPane imageWrapper = new StackPane(pageView);
+        imageWrapper.setAlignment(Pos.CENTER);
+        imageWrapper.setStyle("-fx-background-color: #111827;");
+
+        pageScrollPane = new ScrollPane(imageWrapper);
+        pageScrollPane.setFitToWidth(true);
+        pageScrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        pageScrollPane.setStyle(
+                "-fx-background-color: #111827;" +
+                        "-fx-background: #111827;"
         );
+        VBox.setVgrow(pageScrollPane, Priority.ALWAYS);
 
-        try (PDDocument doc = PDDocument.load(new File(novel.getFilePath()))) {
-            PDFTextStripper stripper = new PDFTextStripper();
-            stripper.setStartPage(currentPage);
-            stripper.setEndPage(currentPage);
-            textViewer.setText(stripper.getText(doc));
-        } catch (Exception ex) {
-            textViewer.setText("Could not load PDF: " + ex.getMessage());
-        }
+        // dynamically resize image to fit viewport
+        pageScrollPane.viewportBoundsProperty().addListener((obs, oldVal, newVal) -> {
+            pageView.setFitWidth(newVal.getWidth() - 40);
+        });
 
-        contentBox.getChildren().add(textViewer);
+        contentBox.getChildren().add(pageScrollPane);
         viewPane.setCenter(contentBox);
 
-        // ---- FOOTER NAVIGATION ----
+        // load first page
+        loadPage(currentPage);
+
+        // ---- FOOTER ----
         HBox footer = new HBox(20);
         footer.setAlignment(Pos.CENTER);
         footer.setPadding(new Insets(15, 0, 0, 0));
-        footer.setStyle("-fx-background-color: #111827; -fx-border-color: #2e4066; -fx-border-width: 1 0 0 0;");
+        footer.setStyle(
+                "-fx-background-color: #111827;" +
+                        "-fx-border-color: #2e4066;" +
+                        "-fx-border-width: 1 0 0 0;"
+        );
 
         Button prevBtn = new Button("◀  Previous Page");
         prevBtn.setStyle(
@@ -117,7 +122,7 @@ public class ReadView {
                         "-fx-padding: 8 18 8 18;"
         );
 
-        Label pageStatus = new Label("Page: " + currentPage);
+        Label pageStatus = new Label("Page " + currentPage + " of " + novel.getTotalPages());
         pageStatus.setFont(Font.font("Arial", FontWeight.BOLD, 14));
         pageStatus.setStyle("-fx-text-fill: #e2b96f;");
 
@@ -136,7 +141,7 @@ public class ReadView {
         prevBtn.setOnAction(e -> {
             if (currentPage > 1) {
                 currentPage--;
-                pageStatus.setText("Page: " + currentPage);
+                pageStatus.setText("Page " + currentPage + " of " + novel.getTotalPages());
                 loadPage(currentPage);
             }
         });
@@ -144,7 +149,7 @@ public class ReadView {
         nextBtn.setOnAction(e -> {
             if (novel.getTotalPages() == null || currentPage < novel.getTotalPages()) {
                 currentPage++;
-                pageStatus.setText("Page: " + currentPage);
+                pageStatus.setText("Page " + currentPage + " of " + novel.getTotalPages());
                 loadPage(currentPage);
             }
         });
@@ -157,6 +162,7 @@ public class ReadView {
             try {
                 novel.setCurrentPage(currentPage);
                 libraryService.updateReadingProgress(novel.getId(), currentPage);
+                if (document != null) document.close();
             } catch (Exception ex) {
                 System.err.println("[Progress save failed] " + ex.getMessage());
             }
@@ -165,13 +171,14 @@ public class ReadView {
     }
 
     private void loadPage(int page) {
-        try (PDDocument doc = PDDocument.load(new File(novel.getFilePath()))) {
-            PDFTextStripper stripper = new PDFTextStripper();
-            stripper.setStartPage(page);
-            stripper.setEndPage(page);
-            textViewer.setText(stripper.getText(doc));
+        try {
+            PDFRenderer renderer = new PDFRenderer(document);
+            java.awt.image.BufferedImage bufferedImage = renderer.renderImageWithDPI(page - 1, 150);
+            javafx.scene.image.Image fxImage = SwingFXUtils.toFXImage(bufferedImage, null);
+            pageView.setImage(fxImage);
+            pageScrollPane.setVvalue(0);
         } catch (Exception ex) {
-            textViewer.setText("Could not load PDF: " + ex.getMessage());
+            System.err.println("Could not render page: " + ex.getMessage());
         }
     }
 
