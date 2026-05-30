@@ -4,7 +4,9 @@ import java.util.Objects;
 
 public class NovelModel {
 
+    // my key
     private Integer id;
+
     private String title;
     private  String filePath;
     private String coverPath;

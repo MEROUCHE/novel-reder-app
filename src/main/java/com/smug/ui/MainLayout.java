@@ -76,7 +76,6 @@ public class MainLayout {
         Button homeBtn = createMenuButton("🏠 Home Library", true);
         Button favoriteBtn = createMenuButton("⭐ Favorites", false);
 
-        // Spacer pushes Add Novel button to the bottom
         Region menuSpacer = new Region();
         VBox.setVgrow(menuSpacer, Priority.ALWAYS);
 

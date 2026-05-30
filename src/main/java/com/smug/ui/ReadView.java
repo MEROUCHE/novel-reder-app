@@ -75,7 +75,6 @@ public class ReadView {
         pageView = new ImageView();
         pageView.setPreserveRatio(true);
 
-        // wrap in StackPane for centering
         StackPane imageWrapper = new StackPane(pageView);
         imageWrapper.setAlignment(Pos.CENTER);
         imageWrapper.setStyle("-fx-background-color: #111827;");
@@ -89,7 +88,6 @@ public class ReadView {
         );
         VBox.setVgrow(pageScrollPane, Priority.ALWAYS);
 
-        // dynamically resize image to fit viewport
         pageScrollPane.viewportBoundsProperty().addListener((obs, oldVal, newVal) -> {
             pageView.setFitWidth(newVal.getWidth() - 40);
         });

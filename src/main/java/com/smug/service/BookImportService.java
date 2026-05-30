@@ -18,6 +18,8 @@ public class BookImportService {
     private static final String COVERS_DIR = "data/covers/";
     private final NovelRepository repository;
 
+    // taking a file ad creating an instence(NovelModel) in the bd and make sure it have(cover/title/number of pages)
+    // add a novel
     public BookImportService(NovelRepository repository) {
         this.repository = repository;
     }

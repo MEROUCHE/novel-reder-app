@@ -9,6 +9,7 @@ public class DataBaseManager {
     private static final String DB_USER = AppConfig.get("db.user");;
     private static final String DB_PASSWORD = AppConfig.get("db.password");;
 
+    // connect to the database
     public static Connection getConnection() throws SQLException {
         return DriverManager.getConnection(
                 DB_URL,
@@ -16,7 +17,7 @@ public class DataBaseManager {
                 DB_PASSWORD
         );
     }
-
+    // create the tables (used once)
     public static void initializeDatabase(){
         String createTableSQL ="CREATE TABLE IF NOT EXISTS novels (" +
                 "id SERIAL PRIMARY KEY," +

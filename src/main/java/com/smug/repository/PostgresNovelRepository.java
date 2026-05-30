@@ -63,7 +63,6 @@ public class PostgresNovelRepository implements NovelRepository {
                 }
             }
 
-            // Book already existed — fetch its id
             try (PreparedStatement pstmt = conn.prepareStatement(selectSql)) {
                 pstmt.setString(1, novel.getFilePath());
                 try (ResultSet rs = pstmt.executeQuery()) {

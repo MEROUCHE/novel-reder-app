@@ -60,7 +60,7 @@ public class HomeView {
 
                 visibleNovelsCount++;
 
-                // ---- CARD CONTAINER (StackPane lets us overlay buttons) ----
+                // ---- CARD CONTAINER ---
                 StackPane cardContainer = new StackPane();
 
                 VBox novelCard = new VBox(12);
@@ -93,7 +93,7 @@ public class HomeView {
 
                 novelCard.setOnMouseClicked(e -> mainLayout.switchToReadScene(novel));
 
-                // ---- HEART BUTTON — top right, hover show ----
+                // ---- HEART BUTTON ----
                 Button heartBtn = new Button(novel.isFavorite() ? "❤️" : "🤍");
                 heartBtn.setFont(Font.font(16));
                 heartBtn.setStyle("-fx-background-color: rgba(255,255,255,0.90); -fx-background-radius: 20; -fx-cursor: hand;");
@@ -113,7 +113,7 @@ public class HomeView {
                     }
                 });
 
-                // ---- DELETE BUTTON — top left, hover show ----
+                // ---- DELETE BUTTON ----
                 Button deleteBtn = new Button("−");
                 deleteBtn.setFont(Font.font("Arial", FontWeight.BOLD, 16));
                 deleteBtn.setStyle(
@@ -127,10 +127,10 @@ public class HomeView {
                                 "-fx-max-height: 28px;" +
                                 "-fx-padding: 0;"
                 );
-                deleteBtn.setVisible(false); // hidden by default, shows on hover
+                deleteBtn.setVisible(false);
 
                 deleteBtn.setOnAction(e -> {
-                    // ---- BLOCKING MODAL — app freezes behind it until user responds ----
+                    // ---- BLOCKING MODAL ----
                     javafx.stage.Stage dialog = new javafx.stage.Stage();
                     dialog.initModality(javafx.stage.Modality.APPLICATION_MODAL);
                     dialog.initStyle(javafx.stage.StageStyle.UNDECORATED);
@@ -201,10 +201,10 @@ public class HomeView {
 
                     javafx.scene.Scene dialogScene = new javafx.scene.Scene(dialogBox, 340, 220);
                     dialog.setScene(dialogScene);
-                    dialog.showAndWait(); // blocks everything behind it
+                    dialog.showAndWait();
                 });
 
-                // ---- HOVER: show/hide both overlay buttons ----
+                // ---- HOVER ----
                 cardContainer.setOnMouseEntered(e -> {
                     heartBtn.setVisible(true);
                     deleteBtn.setVisible(true);

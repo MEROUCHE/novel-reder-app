@@ -10,7 +10,6 @@ import javafx.stage.Stage;
 
 public class Main extends Application {
 
-    // Global reference to your friend's backend operations
     public static LibraryService libraryService;
     BookImportService bookImportService;
 
@@ -18,9 +17,10 @@ public class Main extends Application {
     public void start(Stage primaryStage) {
         System.out.println("[System Launcher] Launching Application Framework...");
 
-        // Connect directly to your friend's database tier implementation
         try {
+            // start the bd
             NovelRepository repository = new PostgresNovelRepository();
+            // declare the services
             libraryService = new LibraryService(repository);
             bookImportService = new BookImportService(repository);
 
@@ -29,7 +29,7 @@ public class Main extends Application {
         }
 
         try {
-            // Initialize and present the Main Layout shell window
+            //start the main ui
             MainLayout mainLayout = new MainLayout(primaryStage,libraryService,bookImportService);
             mainLayout.show();
         } catch (Exception e) {
