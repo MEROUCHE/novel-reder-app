@@ -1,8 +1,6 @@
-
 package com.smug.ui;
 
 import com.smug.model.NovelModel;
-import com.smug.repository.NovelRepository;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -14,91 +12,131 @@ import javafx.stage.Stage;
 
 public class MainLayout {
 
-    // 1. تعريف المتغيرات هنا على مستوى الكلاس لكي تراها جميع الدالات بالأسفل
     private Stage window;
     private BorderPane mainPane;
-    private NovelRepository repository; // add this
+    private boolean currentlyOnFavoritesPage = false;
 
-    public MainLayout(Stage stage, NovelRepository repository) { // add parameter
+    public MainLayout(Stage stage) {
         this.window = stage;
         this.mainPane = new BorderPane();
-        this.repository = repository; // assign it
     }
 
-
     public void show() {
-        window.setTitle("WebNovel App - لوحة التحكم");
+        window.setTitle("WebNovel Management Dashboard");
 
-        // ---- الشريط العلوي الثابت (Top: HBox) ----
+        // ---- TOP CONTROL HEADER BAR ----
         HBox topBar = new HBox(15);
         topBar.setPadding(new Insets(15));
         topBar.setAlignment(Pos.CENTER_LEFT);
-        topBar.setStyle("-fx-background-color: #2c3e50;");
+        topBar.setStyle("-fx-background-color: #1e2a4a; ");
 
-        Label logoLabel = new Label("WebNovel App");
-        logoLabel.setFont(Font.font("System", FontWeight.BOLD, 18));
-        logoLabel.setStyle("-fx-text-fill: white;");
+        Label logoLabel = new Label("📖 Novel Reader");
+        logoLabel.setFont(Font.font("Arial", FontWeight.BOLD, 20));
+        logoLabel.setStyle("-fx-text-fill: #e2b96f;");
+
+        // The growing layout spacer engine forces the search field to stick to the far right side
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
 
         TextField searchField = new TextField();
-        searchField.setPromptText("ابحث عن رواية...");
-        searchField.setPrefWidth(250);
+        searchField.setPromptText("🔍  Search novels...");
+        searchField.setPrefWidth(280);
+        searchField.setPrefHeight(36);
+        searchField.setStyle(
+                "-fx-background-color: #2a2a4a;" +
+                        "-fx-text-fill: #ffffff;" +
+                        "-fx-prompt-text-fill: #8888aa;" +
+                        "-fx-background-radius: 20;" +
+                        "-fx-border-radius: 20;" +
+                        "-fx-padding: 0 16 0 16;" +
+                        "-fx-font-size: 13px;"
+        );
 
-        ComboBox<String> filterBox = new ComboBox<>();
-        filterBox.getItems().addAll("كل التصنيفات", "رعب", "رومانسي", "خيال");
-        filterBox.setValue("كل التصنيفات");
-
-        topBar.getChildren().addAll(logoLabel, searchField, filterBox);
+        topBar.getChildren().addAll(logoLabel, spacer, searchField);
         mainPane.setTop(topBar);
 
-        // ---- القائمة الجانبية الثابتة (Left: VBox) ----
-        VBox leftMenu = new VBox(10);
-        leftMenu.setPadding(new Insets(20, 15, 20, 15));
-        leftMenu.setPrefWidth(200);
-        leftMenu.setStyle("-fx-background-color: #34495e;");
+        // ---- LEFT PANEL NAVIGATION MENU ----
+        VBox leftMenu = new VBox(6);
+        leftMenu.setPadding(new Insets(24, 12, 24, 12));
+        leftMenu.setPrefWidth(190);
+        leftMenu.setStyle("-fx-background-color: #162040;");
 
-        Button homeBtn = createMenuButton("🏠 الرئيسية");
-        Button favoriteBtn = createMenuButton("⭐ المفضلة");
-        Button savedBtn = createMenuButton("💾 المحفوظات");
+        Label menuTitle = new Label("MENU");
+        menuTitle.setStyle("-fx-text-fill: #556080; -fx-font-size: 11px; -fx-font-weight: bold; -fx-padding: 0 0 10 8;");
 
-        leftMenu.getChildren().addAll(homeBtn, favoriteBtn, savedBtn);
+        Button homeBtn = createMenuButton("🏠 Home Library",true);
+        Button favoriteBtn = createMenuButton("⭐ Favorites",false);
+
+        leftMenu.getChildren().addAll(menuTitle,homeBtn, favoriteBtn);
         mainPane.setLeft(leftMenu);
 
-        // تشغيل الشاشة المركزية الافتراضية عند الإقلاع
-        switchToHome();
+        // Show standard grid on startup window launch
+        switchToHome(false, "");
 
-        // ربط زر الرئيسية للتنقل
-        homeBtn.setOnAction(e -> switchToHome());
+        homeBtn.setOnAction(e -> {
+            setActiveButton(homeBtn,favoriteBtn);
+            currentlyOnFavoritesPage = false;
+            searchField.clear();
+            switchToHome(false, "");
+        });
 
-        // ---- إعداد وعرض الـ Scene ----
-        Scene scene = new Scene(mainPane, 1000, 700);
+        favoriteBtn.setOnAction(e -> {
+            setActiveButton(favoriteBtn,homeBtn);
+            currentlyOnFavoritesPage = true;
+            searchField.clear();
+            switchToHome(true, "");
+        });
+
+        // Search trigger executing query on Keyboard Enter Stroke action event
+        // Replace setOnAction with textProperty listener:
+        searchField.textProperty().addListener((obs, old, newVal) ->
+                switchToHome(currentlyOnFavoritesPage, newVal)
+        );
+// Remove the searchField.setOnAction(...) line
+
+        Scene scene = new Scene(mainPane, 1150, 780);
         window.setScene(scene);
         window.setResizable(true);
         window.show();
     }
 
-    // ---- دالات التبديل الديناميكي للمنتصف (Functions to switch scenes) ----
-
-
-    public void switchToHome() {
-        HomeView homeView = new HomeView(this, repository); // pass it here
+    public void switchToHome(boolean showOnlyFavorites, String searchQuery) {
+        HomeView homeView = new HomeView(this, showOnlyFavorites, searchQuery);
         mainPane.setCenter(homeView.getView());
     }
 
-    public void switchToNovelDetail(NovelModel novel) {
-        NovelDetailView detailView = new NovelDetailView(this, novel, repository);
-        mainPane.setCenter(detailView.getView());
+    public void switchToReadScene(NovelModel novel) {
+        ReadView readView = new ReadView(this, novel);
+        mainPane.setCenter(readView.getView());
     }
 
-    // دالة مساعدة لتنسيق أزرار القائمة الجانبية
-    private Button createMenuButton(String text) {
+    private Button createMenuButton(String text,boolean active) {
         Button btn = new Button(text);
         btn.setMaxWidth(Double.MAX_VALUE);
-        btn.setPrefHeight(40);
-        btn.setAlignment(Pos.BASELINE_LEFT);
-        btn.setStyle("-fx-background-color: transparent; -fx-text-fill: #ecf0f1; -fx-font-size: 14px; -fx-cursor: hand;");
+        btn.setPrefHeight(42);
+        btn.setAlignment(Pos.CENTER_LEFT);
+        btn.setPadding(new Insets(0,0,0,12));
+        String base = "-fx-background-radius: 10; -fx-font-size: 13px; -fx-cursor: hand;";
+        if (active) {
+            btn.setStyle(base + "-fx-background-color: #e2b96f; -fx-text-fill: #1a1a2e; -fx-font-weight: bold;");
+        } else {
+            btn.setStyle(base + "-fx-background-color: transparent; -fx-text-fill: #a0a8c0;");
+        }
 
-        btn.setOnMouseEntered(e -> btn.setStyle("-fx-background-color: #16a085; -fx-text-fill: white; -fx-font-size: 14px;"));
-        btn.setOnMouseExited(e -> btn.setStyle("-fx-background-color: transparent; -fx-text-fill: #ecf0f1; -fx-font-size: 14px;"));
+        btn.setOnMouseEntered(e -> {
+            if (!btn.getStyle().contains("#e2b96f"))
+                btn.setStyle(base + "-fx-background-color: #2a2a4a; -fx-text-fill: #ffffff;");
+        });
+        btn.setOnMouseExited(e -> {
+            if (!btn.getStyle().contains("#e2b96f"))
+                btn.setStyle(base + "-fx-background-color: transparent; -fx-text-fill: #a0a8c0;");
+        });
         return btn;
+    }
+
+    private void setActiveButton(Button active, Button inactive) {
+        String base = "-fx-background-radius: 10; -fx-font-size: 13px; -fx-cursor: hand;";
+        active.setStyle(base + "-fx-background-color: #e2b96f; -fx-text-fill: #1a1a2e; -fx-font-weight: bold;");
+        inactive.setStyle(base + "-fx-background-color: transparent; -fx-text-fill: #a0a8c0;");
     }
 }

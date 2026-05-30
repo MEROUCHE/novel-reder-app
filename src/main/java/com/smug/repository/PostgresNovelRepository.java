@@ -96,7 +96,9 @@ public class PostgresNovelRepository implements NovelRepository {
                 Integer totalPages = (Integer) rs.getObject("total_pages");
                 boolean isFavorite = rs.getBoolean("is_favorite"); // Directly fetch boolean
 
-                novels.add(new NovelModel(title, filePath, coverPath, currentPage, totalPages, isFavorite));
+                NovelModel novel = new NovelModel(title, filePath, coverPath, currentPage, totalPages, isFavorite);
+                novel.setId(rs.getInt("id"));
+                novels.add(novel);
             }
         } catch (SQLException e) {
             System.err.println("[Backend] Error fetching novels: " + e.getMessage());

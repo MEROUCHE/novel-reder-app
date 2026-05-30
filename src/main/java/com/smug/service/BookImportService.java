@@ -1,15 +1,17 @@
 package com.smug.service;
 
-import com.smug.model.NovelModel;
-import com.smug.repository.NovelRepository;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.rendering.PDFRenderer;
+
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
+
+import com.smug.model.NovelModel;
+import com.smug.repository.NovelRepository;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.rendering.PDFRenderer;
 
 public class BookImportService {
 
@@ -38,7 +40,7 @@ public class BookImportService {
 
             PDFRenderer pdfRenderer = new PDFRenderer(document);
 
-            BufferedImage bufferedImage = pdfRenderer.renderImageWithDPI(0, 72);
+            BufferedImage bufferedImage = pdfRenderer.renderImageWithDPI(0, 150);
 
             String coverFileName = UUID.randomUUID().toString() + "_cover.png";
             File outputFile = new File(COVERS_DIR + coverFileName);
@@ -48,7 +50,6 @@ public class BookImportService {
             System.out.println("[Service] Successfully parsed: " + title + " (" + totalPages + " pages)");
 
             NovelModel novel = new NovelModel(title, pdfFile.getAbsolutePath(), outputFile.getPath(), 0, totalPages, false);
-
             return repository.addNovel(novel);
         }
     }
